@@ -27,13 +27,11 @@ class RenderTest(unittest.TestCase):
         html = render_page(load_retailers(FIXTURE), REFRESHED)
         self.assertNotIn("Fixture Shop Rijeka", html)
 
-    def test_title_flags_unverified_product(self):
+    def test_refresh_time_shown_and_title_flags_unverified(self):
+        self.assertIn(REFRESHED, render_page([], REFRESHED))
         def title(h):
             return h.split("<title>")[1].split("</title>")[0]
         self.assertNotEqual(title(render_page([], REFRESHED, verified=False)), title(render_page([], REFRESHED, verified=True)))
-
-    def test_refresh_time_shown(self):
-        self.assertIn(REFRESHED, render_page([], REFRESHED))
 
     def test_no_stock_shows_empty_state(self):
         html = render_page([retailer(availability=OUT_OF_STOCK), retailer(availability=UNKNOWN)], REFRESHED)
