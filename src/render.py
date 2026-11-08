@@ -6,7 +6,7 @@ from .stock import IN_STOCK
 
 def check_order_url(r):
     u = urlsplit(r.order_url)
-    if u.scheme != "https" or not u.hostname or u.hostname != r.host:
+    if any(c.isspace() for c in r.order_url) or u.scheme != "https" or not u.hostname or u.hostname != r.host.lower():
         raise ValueError(f"{r.name}: order link {r.order_url!r} is not an https link on {r.host}")
 
 

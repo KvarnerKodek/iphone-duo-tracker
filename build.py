@@ -1,4 +1,5 @@
 import argparse
+import fcntl
 import json
 import os
 import shutil
@@ -38,7 +39,12 @@ def build(config_path, site):
     staging = Path(tempfile.mkdtemp(prefix=site.name + ".new.", dir=site.parent))
     try:
         (staging / "index.html").write_text(html, encoding="utf-8")
-        replace_dir(staging, site)
+        fd = os.open(site.parent, os.O_RDONLY)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX)
+            replace_dir(staging, site)
+        finally:
+            os.close(fd)
     finally:
         shutil.rmtree(staging, ignore_errors=True)
 

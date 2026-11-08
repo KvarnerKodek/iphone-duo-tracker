@@ -19,6 +19,9 @@ class Retailer:
     @classmethod
     def from_dict(cls, d):
         r = cls(d["name"], d["variant"], d["availability"], d["order_url"], d["host"])
+        for field in (r.name, r.variant):
+            if not isinstance(field, str) or not field.strip():
+                raise ValueError(f"name and variant must be non-empty text: {d!r}")
         if r.availability not in AVAILABILITIES:
             raise ValueError(f"{r.name}: unknown availability {r.availability!r}")
         return r

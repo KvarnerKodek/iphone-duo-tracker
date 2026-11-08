@@ -30,4 +30,7 @@ def fetch_retailer(entry):
 
 
 def fetch_all(entries):
+    names = [e["name"] for e in entries]
+    if len(set(names)) != len(names):
+        raise ValueError("duplicate retailer name in config")
     return [r for entry in entries for r in fetch_retailer(entry)]
