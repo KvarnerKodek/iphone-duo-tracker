@@ -9,6 +9,7 @@ from unittest import mock
 
 import build
 from src.fetch import parse_feed
+from tests.check_page import check_page
 
 ROOT = Path(__file__).resolve().parent.parent
 FEEDS = ROOT / "fixtures" / "feeds"
@@ -36,11 +37,13 @@ class BuildTest(unittest.TestCase):
     def index(self):
         return (self.site / "index.html").read_bytes()
 
-    def test_shipped_config_builds_empty_state(self):
+    def test_shipped_config_builds_row_per_store(self):
         r = subprocess.run([sys.executable, str(ROOT / "build.py"), "--site", str(self.site)], capture_output=True, text=True, cwd=ROOT)
         self.assertEqual(r.returncode, 0, r.stderr)
         html = self.index().decode()
-        self.assertIn("No retailers", html)
+        stores = json.loads((ROOT / "retailers.json").read_text())["retailers"]
+        self.assertEqual(html.count("<tr><td>"), len(stores))
+        self.assertEqual(check_page(html, {e["name"]: e["host"] for e in stores}, datetime.now(timezone.utc)), [])
         self.assertIn("Last refreshed", html)
         self.assertIn("unverified", html)
 
