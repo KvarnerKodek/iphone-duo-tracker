@@ -41,3 +41,12 @@ class FailsafeTest(unittest.TestCase):
         r = self.refresh([{"name": "Bad", "host": "bad.example.test", "feed": (FEEDS / "malformed.json").as_uri()}])
         self.assertNotEqual(r.returncode, 0)
         self.assertFalse(self.index.exists())
+
+
+    def test_failsafe_unencodable_page_leaves_no_temp_file(self):
+        cfg = self.dir / "stock.json"
+        cfg.write_text(json.dumps({"retailers": [{"name": "\ud800", "variant": "256 GB", "availability": "in_stock", "order_url": "https://shop-a.example.test/o", "host": "shop-a.example.test"}]}))
+        site = self.dir / "site"
+        r = subprocess.run(["python3", "-m", "src", str(cfg), str(site)], capture_output=True, text=True, cwd=ROOT)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertEqual(list(site.iterdir()), [])
