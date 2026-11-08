@@ -35,7 +35,7 @@ def parse_feed(entry, raw, now):
             "availability": item["availability"],
             "name": entry["name"],
             "host": entry["host"],
-            "order_url": entry["order_url"],
+            "order_url": entry.get("order_url") or item["order_url"],
             **extra,
         })
         for item in feed["items"]
