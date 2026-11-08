@@ -20,7 +20,7 @@ def render_page(retailers, refreshed, product="iPhone Duo", verified=False):
     rows = "".join(
         f"<tr><td>{escape(r.name)}</td><td>{escape(r.variant)}</td>"
         f'<td class="status">{STATUS_LABELS[r.availability]}</td>'
-        f"<td>{escape(refreshed)}</td>"
+        f"<td>{escape(r.data_time or refreshed)}</td>"
         f'<td><a href="{escape(r.order_url)}">Order</a></td></tr>'
         for r in retailers
     )

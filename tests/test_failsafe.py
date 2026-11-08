@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 FEEDS = ROOT / "fixtures" / "feeds"
-GOOD = {"name": "Shop A", "host": "shop-a.example.test", "feed": (FEEDS / "shop-a.json").as_uri()}
+GOOD = {"name": "Shop A", "host": "shop-a.example.test", "order_url": "https://shop-a.example.test/order/duo-256", "feed": (FEEDS / "shop-a.json").as_uri()}
 
 
 class FailsafeTest(unittest.TestCase):
@@ -31,17 +31,16 @@ class FailsafeTest(unittest.TestCase):
         self.assertNotEqual(r.returncode, 0)
         self.assertEqual(self.index.read_bytes(), before)
 
-    def test_failsafe_malformed_feed_keeps_page(self):
-        self.assert_keeps_page({"name": "Bad", "host": "bad.example.test", "feed": (FEEDS / "malformed.json").as_uri()})
+    def test_failsafe_off_host_link_keeps_page(self):
+        self.assert_keeps_page({**GOOD, "name": "Bad", "host": "other.example.test"})
 
-    def test_failsafe_missing_feed_keeps_page(self):
-        self.assert_keeps_page({"name": "Gone", "host": "gone.example.test", "feed": (FEEDS / "missing.json").as_uri()})
+    def test_failsafe_missing_config_key_keeps_page(self):
+        self.assert_keeps_page({"name": "Bad", "host": "bad.example.test", "feed": GOOD["feed"]})
 
     def test_failsafe_failed_first_refresh_leaves_no_page(self):
-        r = self.refresh([{"name": "Bad", "host": "bad.example.test", "feed": (FEEDS / "malformed.json").as_uri()}])
+        r = self.refresh([{**GOOD, "host": "other.example.test"}])
         self.assertNotEqual(r.returncode, 0)
         self.assertFalse(self.index.exists())
-
 
     def test_failsafe_unencodable_page_leaves_no_temp_file(self):
         cfg = self.dir / "stock.json"
