@@ -1,0 +1,4 @@
+scenarios:
+  - name: fixture page lists only the in-stock store
+    run: python3 -m src fixtures/stock.json /tmp/scn-site && cat /tmp/scn-site/index.html
+    expect: contains "Fixture Shop Zagreb", lacks "Fixture Shop Split", contains "Last refreshed:"
