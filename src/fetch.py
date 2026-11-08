@@ -6,6 +6,7 @@ from .stock import UNKNOWN, Retailer
 
 TIMEOUT_SECONDS = 10
 MAX_DATA_AGE = timedelta(seconds=86400)
+MAX_CLOCK_SKEW = timedelta(seconds=300)
 TIME_FORMAT = "%Y-%m-%d %H:%M UTC"
 DEFAULT_VARIANT = "iPhone Duo"
 
@@ -16,7 +17,7 @@ def read_url(url):
 
 
 def is_fresh(as_of, now):
-    return as_of.tzinfo is not None and abs(now - as_of) <= MAX_DATA_AGE
+    return as_of.tzinfo is not None and -MAX_CLOCK_SKEW <= now - as_of <= MAX_DATA_AGE
 
 
 def parse_feed(entry, raw, now):

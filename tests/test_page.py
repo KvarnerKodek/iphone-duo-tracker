@@ -49,6 +49,14 @@ class CheckPageTest(unittest.TestCase):
         self.assertTrue(check_page(page(), {**HOSTS, "Other": "other.example.test"}, NOW))
 
 
+class FeedFreshnessTest(unittest.TestCase):
+    def test_future_as_of_beyond_clock_skew_is_not_fresh(self):
+        from src.fetch import is_fresh
+        for delta, fresh in ((timedelta(seconds=60), True), (timedelta(hours=1), False), (timedelta(hours=23), False), (-timedelta(seconds=86400), True), (-timedelta(seconds=86401), False)):
+            with self.subTest(delta=delta):
+                self.assertEqual(is_fresh(NOW + delta, NOW), fresh)
+
+
 class BuiltPageTest(unittest.TestCase):
     def build(self, feeds):
         tmp = tempfile.TemporaryDirectory()
