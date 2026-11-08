@@ -4,3 +4,6 @@
 - name: fixture page shows the refresh time
   run: python3 -m src fixtures/stock.json /tmp/scn-site && cat /tmp/scn-site/index.html
   expect: "Last refreshed"
+- name: refresh script builds the page from a fixture feed
+  run: printf '{"product":"iPhone Duo","product_verified":false,"retailers":[{"name":"Fixture Shop Zagreb","host":"shop-a.example.test","feed":"file://'"$PWD"'/fixtures/feeds/shop-a.json"}]}' > /tmp/scn-cfg.json && SITE_DIR=/tmp/scn-refresh sh refresh.sh /tmp/scn-cfg.json && cat /tmp/scn-refresh/index.html
+  expect: Fixture Shop Zagreb
