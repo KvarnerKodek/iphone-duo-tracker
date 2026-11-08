@@ -20,7 +20,7 @@ class HardeningTest(unittest.TestCase):
                 r(**kw)
 
     def test_whitespace_in_link_rejected(self):
-        for u in (" https://a.example.test/o", "https://a.example.test/o\n"):
+        for u in (" https://a.example.test/o", "https://a.example.test/o\n", "https://evil.test\\@a.example.test/o", "https://evil.test@a.example.test/o"):
             with self.assertRaises(ValueError):
                 render_page([r(order_url=u)], "now")
 
