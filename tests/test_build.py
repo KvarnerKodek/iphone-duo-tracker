@@ -84,10 +84,10 @@ class BuildTest(unittest.TestCase):
         self.assert_unknown_row("Down", "http://127.0.0.1:9/feed.json")
 
     def test_off_host_link_keeps_site(self):
-        self.assert_failure_keeps_site([entry("Shop A", "other.example.test", "shop-a.json")])
+        self.assert_failure_keeps_site([{**entry("Shop A", "other.example.test", "shop-a.json"), "order_url": "https://shop-a.example.test/order/duo"}])
 
     def test_failure_without_prior_site_creates_none(self):
-        self.assertNotEqual(self.build([entry("Shop A", "other.example.test", "shop-a.json")]).returncode, 0)
+        self.assertNotEqual(self.build([{**entry("Shop A", "other.example.test", "shop-a.json"), "order_url": "https://shop-a.example.test/order/duo"}]).returncode, 0)
         self.assertFalse(self.site.exists())
 
     def test_repeated_runs_replace_site(self):
@@ -115,8 +115,16 @@ class BuildTest(unittest.TestCase):
 
     def test_feed_item_cannot_override_configured_identity(self):
         raw = json.dumps({"items": [{"name": "Evil", "host": "evil.example.test", "variant": "v", "availability": "in_stock", "order_url": "https://a.example.test/o"}]})
-        r = parse_feed({"name": "Shop", "host": "a.example.test"}, raw, datetime.now(timezone.utc))[0]
+        r = parse_feed({"name": "Shop", "host": "a.example.test", "order_url": "https://a.example.test/o"}, raw, datetime.now(timezone.utc))[0]
         self.assertEqual((r.name, r.host), ("Shop", "a.example.test"))
+
+    def test_feed_item_cannot_supply_link_or_data_time(self):
+        raw = json.dumps({"items": [{"variant": "v", "availability": "in_stock", "order_url": "https://evil.example.test/o", "data_time": "2020-01-01 00:00 UTC"}]})
+        r = parse_feed({"name": "Shop", "host": "a.example.test", "order_url": "https://a.example.test/o"}, raw, datetime.now(timezone.utc))[0]
+        self.assertEqual((r.order_url, r.data_time), ("https://a.example.test/o", None))
+
+    def test_unsupported_feed_scheme_renders_unknown(self):
+        self.assert_unknown_row("Odd", "ftp://bad.example.test/feed.json")
 
 
 if __name__ == "__main__":

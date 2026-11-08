@@ -30,7 +30,14 @@ def parse_feed(entry, raw, now):
         else:
             extra["availability"] = UNKNOWN
     items = [
-        Retailer.from_dict({**item, "name": entry["name"], "host": entry["host"], **extra})
+        Retailer.from_dict({
+            "variant": item["variant"],
+            "availability": item["availability"],
+            "name": entry["name"],
+            "host": entry["host"],
+            "order_url": entry["order_url"],
+            **extra,
+        })
         for item in feed["items"]
     ]
     if not items:
@@ -43,11 +50,8 @@ def unknown_retailer(entry):
 
 
 def fetch_retailer(entry, now):
-    url = entry["feed"]
-    if not url.startswith(("http://", "https://", "file://")):
-        raise ValueError(f"{entry['name']}: unsupported feed URL {url!r}")
     try:
-        return parse_feed(entry, read_url(url), now)
+        return parse_feed(entry, read_url(entry["feed"]), now)
     except Exception:
         return [unknown_retailer(entry)]
 

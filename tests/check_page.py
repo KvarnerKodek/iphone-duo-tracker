@@ -7,6 +7,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 MAX_AGE = timedelta(seconds=86400)
+MAX_CLOCK_SKEW = timedelta(seconds=300)
 STATUSES = ("in stock", "out of stock", "unknown")
 TIME_FORMAT = "%Y-%m-%d %H:%M UTC"
 
@@ -62,6 +63,8 @@ def check_page(html, hosts, now):
             age = now - datetime.strptime(cells[3], TIME_FORMAT).replace(tzinfo=timezone.utc)
             if age > MAX_AGE:
                 problems.append(f"{name}: data time {cells[3]!r} is older than {int(MAX_AGE.total_seconds())} s")
+            elif age < -MAX_CLOCK_SKEW:
+                problems.append(f"{name}: data time {cells[3]!r} is in the future")
         except ValueError:
             problems.append(f"{name}: data time {cells[3]!r} is not a time")
     for name in hosts:
