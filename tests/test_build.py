@@ -48,7 +48,8 @@ class BuildTest(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         html = self.index().decode()
         self.assertIn("Shop A", html)
-        self.assertNotIn("Shop B", html)
+        self.assertIn("Shop B", html)
+        self.assertIn("out of stock", html)
 
     def assert_failure_keeps_site(self, retailers):
         self.assertEqual(self.build([entry("Shop A", "shop-a.example.test", "shop-a.json")]).returncode, 0)
