@@ -23,7 +23,7 @@ def render_page(retailers, refreshed, product="iPhone Duo", verified=False):
     body = f"<ul>{items}</ul>" if listed else "<p>No retailers currently have it in stock.</p>"
     return (
         '<!doctype html><html lang="en"><head><meta charset="utf-8">'
-        f"<title>{escape(product)} stock in Croatia</title></head><body>"
+        f"<title>{escape(product)}{escape(note)} stock in Croatia</title></head><body>"
         f"<h1>{escape(product)}{escape(note)} in stock in Croatia</h1>{body}"
         f"<p>Last refreshed: {escape(refreshed)}</p></body></html>\n"
     )
