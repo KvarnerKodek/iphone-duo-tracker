@@ -1,0 +1,6 @@
+- name: fixture page lists the in-stock store
+  run: python3 -m src fixtures/stock.json /tmp/scn-site && cat /tmp/scn-site/index.html
+  expect: Fixture Shop Zagreb
+- name: fixture page shows the refresh time
+  run: python3 -m src fixtures/stock.json /tmp/scn-site && cat /tmp/scn-site/index.html
+  expect: "Last refreshed"
