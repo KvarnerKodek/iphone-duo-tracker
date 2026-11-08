@@ -1,10 +1,10 @@
 # Invariants
 
 ## Listing
-[Listing](.jinni/features/tracker.md)
+[Listing](.jinni/features/iphone-duo-tracker.md)
 
 ## Refresh
-[Refresh](.jinni/features/tracker.md)
+[Refresh](.jinni/features/iphone-duo-tracker.md)
 
 ## Configuration
-[Configuration](.jinni/features/tracker.md)
+[Configuration](.jinni/features/iphone-duo-tracker.md)
