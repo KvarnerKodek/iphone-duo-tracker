@@ -7,4 +7,4 @@ The page lists each Croatian retailer that reports iPhone Duo in stock, with its
 Every listed retailer links to its iPhone Duo order page. The link is non-empty, uses https and is on the retailer's configured host; a build with any other in-stock link fails.
 
 ## tracker.nightly-refresh
-A scheduled workflow runs nightly, fetches every configured retailer's stock, rebuilds the page and publishes it to GitHub Pages. The page shows the time of its last successful refresh. A failed fetch fails the run, the deploy does not start and the previously published page stays in place.
+A Jinni-scheduled daily job runs refresh.sh, which fetches every configured retailer's stock and rebuilds the served page; the existing nightly workflow stays. The page shows the time of its last successful refresh. A failed fetch makes refresh.sh exit non-zero and the previously served page stays in place.
