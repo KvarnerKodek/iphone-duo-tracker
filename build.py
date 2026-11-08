@@ -15,6 +15,8 @@ ROOT = Path(__file__).resolve().parent
 
 def replace_dir(new, target):
     old = target.with_name(target.name + ".old")
+    if not target.exists() and old.exists():
+        os.rename(old, target)
     shutil.rmtree(old, ignore_errors=True)
     if target.exists():
         os.rename(target, old)

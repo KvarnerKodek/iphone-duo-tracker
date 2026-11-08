@@ -4,6 +4,10 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
+
+import build
+from src.fetch import parse_feed
 
 ROOT = Path(__file__).resolve().parent.parent
 FEEDS = ROOT / "fixtures" / "feeds"
@@ -78,6 +82,29 @@ class BuildTest(unittest.TestCase):
         self.build([entry("Shop A", "shop-a.example.test", "shop-a.json")])
         self.assertEqual(self.build([]).returncode, 0)
         self.assertIn(b"No retailers", self.index())
+
+    def test_failed_swap_after_interrupted_swap_restores_last_good_site(self):
+        old = self.dir / "site.old"
+        old.mkdir()
+        (old / "index.html").write_text("last good")
+        new = self.dir / "site.new"
+        new.mkdir()
+        real = build.os.rename
+
+        def failing(src, dst):
+            if Path(src) == new:
+                raise OSError("boom")
+            return real(src, dst)
+
+        with mock.patch.object(build.os, "rename", failing):
+            with self.assertRaises(OSError):
+                build.replace_dir(new, self.site)
+        self.assertEqual((self.site / "index.html").read_text(), "last good")
+
+    def test_feed_item_cannot_override_configured_identity(self):
+        raw = json.dumps({"items": [{"name": "Evil", "host": "evil.example.test", "variant": "v", "availability": "in_stock", "order_url": "https://a.example.test/o"}]})
+        r = parse_feed({"name": "Shop", "host": "a.example.test"}, raw)[0]
+        self.assertEqual((r.name, r.host), ("Shop", "a.example.test"))
 
 
 if __name__ == "__main__":

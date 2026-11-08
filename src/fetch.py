@@ -14,7 +14,7 @@ def read_url(url):
 def parse_feed(entry, raw):
     items = json.loads(raw)["items"]
     return [
-        Retailer.from_dict({"name": entry["name"], "host": entry["host"], **item})
+        Retailer.from_dict({**item, "name": entry["name"], "host": entry["host"]})
         for item in items
     ]
 
