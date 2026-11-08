@@ -1,6 +1,9 @@
 - name: fixture page lists the in-stock store
-  run: python3 -m src fixtures/stock.json /tmp/scn-site && cat /tmp/scn-site/index.html
+  run: d=$(mktemp -d) && python3 -m src fixtures/stock.json "$d" && cat "$d/index.html"
   expect: Fixture Shop Zagreb
 - name: fixture page shows the refresh time
-  run: python3 -m src fixtures/stock.json /tmp/scn-site && cat /tmp/scn-site/index.html
+  run: d=$(mktemp -d) && python3 -m src fixtures/stock.json "$d" && cat "$d/index.html"
   expect: "Last refreshed"
+- name: refresh script builds the page from a fixture feed
+  run: d=$(mktemp -d) && printf '{"product":"iPhone Duo","product_verified":false,"retailers":[{"name":"Fixture Shop Zagreb","host":"shop-a.example.test","feed":"file://'"$PWD"'/fixtures/feeds/shop-a.json"}]}' > "$d/cfg.json" && SITE_DIR="$d/site" sh refresh.sh "$d/cfg.json" && cat "$d/site/index.html"
+  expect: Fixture Shop Zagreb
