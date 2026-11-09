@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 import subprocess
 import sys
 import tempfile
@@ -8,13 +9,14 @@ from unittest import mock
 
 import build
 from src.fetch import parse_feed
+from tests.check_page import check_page
 
 ROOT = Path(__file__).resolve().parent.parent
 FEEDS = ROOT / "fixtures" / "feeds"
 
 
 def entry(name, host, feed):
-    return {"name": name, "host": host, "feed": feed if "://" in feed else (FEEDS / feed).as_uri()}
+    return {"name": name, "host": host, "order_url": f"https://{host}/order/duo", "feed": feed if "://" in feed else (FEEDS / feed).as_uri()}
 
 
 class BuildTest(unittest.TestCase):
@@ -35,11 +37,13 @@ class BuildTest(unittest.TestCase):
     def index(self):
         return (self.site / "index.html").read_bytes()
 
-    def test_shipped_config_builds_empty_state(self):
+    def test_shipped_config_builds_row_per_store(self):
         r = subprocess.run([sys.executable, str(ROOT / "build.py"), "--site", str(self.site)], capture_output=True, text=True, cwd=ROOT)
         self.assertEqual(r.returncode, 0, r.stderr)
         html = self.index().decode()
-        self.assertIn("No retailers", html)
+        stores = json.loads((ROOT / "retailers.json").read_text())["retailers"]
+        self.assertEqual(html.count("<tr><td>"), len(stores))
+        self.assertEqual(check_page(html, {e["name"]: e["host"] for e in stores}, datetime.now(timezone.utc)), [])
         self.assertIn("Last refreshed", html)
         self.assertIn("unverified", html)
 
@@ -48,7 +52,8 @@ class BuildTest(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         html = self.index().decode()
         self.assertIn("Shop A", html)
-        self.assertNotIn("Shop B", html)
+        self.assertIn("Shop B", html)
+        self.assertIn("out of stock", html)
 
     def assert_failure_keeps_site(self, retailers):
         self.assertEqual(self.build([entry("Shop A", "shop-a.example.test", "shop-a.json")]).returncode, 0)
@@ -59,23 +64,30 @@ class BuildTest(unittest.TestCase):
         self.assertEqual(self.index(), before)
         self.assertEqual(sorted(p.name for p in self.dir.iterdir()), ["cfg.json", "site"])
 
-    def test_one_of_several_failing_keeps_site(self):
-        self.assert_failure_keeps_site([entry("Shop A", "shop-a.example.test", "shop-a.json"), entry("Gone", "gone.example.test", "missing.json")])
+    def assert_unknown_row(self, name, feed):
+        r = self.build([entry("Shop A", "shop-a.example.test", "shop-a.json"), entry(name, "bad.example.test", feed)])
+        self.assertEqual(r.returncode, 0, r.stderr)
+        row = self.index().decode().split(f"<td>{name}</td>")[1].split("</tr>")[0]
+        self.assertIn(">unknown<", row)
+        self.assertIn("https://bad.example.test/order/duo", row)
 
-    def test_malformed_json_keeps_site(self):
-        self.assert_failure_keeps_site([entry("Bad", "shop-a.example.test", "malformed.json")])
+    def test_missing_feed_renders_unknown(self):
+        self.assert_unknown_row("Gone", "missing.json")
 
-    def test_unknown_availability_keeps_site(self):
-        self.assert_failure_keeps_site([entry("Bad", "shop-a.example.test", "bad-availability.json")])
+    def test_malformed_json_renders_unknown(self):
+        self.assert_unknown_row("Bad", "malformed.json")
+
+    def test_unknown_availability_renders_unknown(self):
+        self.assert_unknown_row("Bad", "bad-availability.json")
+
+    def test_unreachable_http_feed_renders_unknown(self):
+        self.assert_unknown_row("Down", "http://127.0.0.1:9/feed.json")
 
     def test_off_host_link_keeps_site(self):
-        self.assert_failure_keeps_site([entry("Shop A", "other.example.test", "shop-a.json")])
-
-    def test_unreachable_http_feed_keeps_site(self):
-        self.assert_failure_keeps_site([entry("Down", "shop-a.example.test", "http://127.0.0.1:9/feed.json")])
+        self.assert_failure_keeps_site([{**entry("Shop A", "other.example.test", "shop-a.json"), "order_url": "https://shop-a.example.test/order/duo"}])
 
     def test_failure_without_prior_site_creates_none(self):
-        self.assertNotEqual(self.build([entry("Gone", "gone.example.test", "missing.json")]).returncode, 0)
+        self.assertNotEqual(self.build([{**entry("Shop A", "other.example.test", "shop-a.json"), "order_url": "https://shop-a.example.test/order/duo"}]).returncode, 0)
         self.assertFalse(self.site.exists())
 
     def test_repeated_runs_replace_site(self):
@@ -103,8 +115,16 @@ class BuildTest(unittest.TestCase):
 
     def test_feed_item_cannot_override_configured_identity(self):
         raw = json.dumps({"items": [{"name": "Evil", "host": "evil.example.test", "variant": "v", "availability": "in_stock", "order_url": "https://a.example.test/o"}]})
-        r = parse_feed({"name": "Shop", "host": "a.example.test"}, raw)[0]
+        r = parse_feed({"name": "Shop", "host": "a.example.test", "order_url": "https://a.example.test/o"}, raw, datetime.now(timezone.utc))[0]
         self.assertEqual((r.name, r.host), ("Shop", "a.example.test"))
+
+    def test_feed_item_cannot_supply_link_or_data_time(self):
+        raw = json.dumps({"items": [{"variant": "v", "availability": "in_stock", "order_url": "https://evil.example.test/o", "data_time": "2020-01-01 00:00 UTC"}]})
+        r = parse_feed({"name": "Shop", "host": "a.example.test", "order_url": "https://a.example.test/o"}, raw, datetime.now(timezone.utc))[0]
+        self.assertEqual((r.order_url, r.data_time), ("https://a.example.test/o", None))
+
+    def test_unsupported_feed_scheme_renders_unknown(self):
+        self.assert_unknown_row("Odd", "ftp://bad.example.test/feed.json")
 
 
 if __name__ == "__main__":

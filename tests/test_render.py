@@ -16,16 +16,19 @@ def retailer(**kw):
 
 
 class RenderTest(unittest.TestCase):
-    def test_lists_only_in_stock(self):
+    def test_every_store_has_row_with_status_and_link(self):
         html = render_page(load_retailers(FIXTURE), REFRESHED)
-        self.assertIn("Fixture Shop Zagreb", html)
-        self.assertIn("256 GB Black", html)
-        self.assertIn("https://shop-a.example.test/order/duo-256", html)
-        self.assertNotIn("Fixture Shop Split", html)
-
-    def test_unknown_excluded(self):
-        html = render_page(load_retailers(FIXTURE), REFRESHED)
-        self.assertNotIn("Fixture Shop Rijeka", html)
+        self.assertEqual(html.count("<tr><td>"), 3)
+        for name, status, url in (
+            ("Fixture Shop Zagreb", "in stock", "https://shop-a.example.test/order/duo-256"),
+            ("Fixture Shop Split", "out of stock", "https://shop-b.example.test/order/duo-128"),
+            ("Fixture Shop Rijeka", "unknown", "https://shop-c.example.test/order/duo-512"),
+        ):
+            with self.subTest(name=name):
+                row = html.split(name)[1].split("</tr>")[0]
+                self.assertIn(status, row)
+                self.assertIn(url, row)
+                self.assertIn(REFRESHED, row)
 
     def test_refresh_time_shown_and_title_flags_unverified(self):
         self.assertIn(REFRESHED, render_page([], REFRESHED))
@@ -33,10 +36,10 @@ class RenderTest(unittest.TestCase):
             return h.split("<title>")[1].split("</title>")[0]
         self.assertNotEqual(title(render_page([], REFRESHED, verified=False)), title(render_page([], REFRESHED, verified=True)))
 
-    def test_no_stock_shows_empty_state(self):
-        html = render_page([retailer(availability=OUT_OF_STOCK), retailer(availability=UNKNOWN)], REFRESHED)
+    def test_no_stores_shows_empty_state(self):
+        html = render_page([], REFRESHED)
         self.assertIn("No retailers", html)
-        self.assertNotIn("<li", html)
+        self.assertNotIn("<tr", html)
 
     def test_rejects_bad_links(self):
         for url in ("", "http://shop.example.test/o", "https://other.example.test/o", "javascript:alert(1)"):
@@ -48,9 +51,9 @@ class RenderTest(unittest.TestCase):
         html = render_page([retailer()], REFRESHED)
         self.assertIn("https://shop.example.test/o", html)
 
-    def test_bad_link_on_out_of_stock_ignored(self):
-        html = render_page([retailer(availability=OUT_OF_STOCK, order_url="")], REFRESHED)
-        self.assertNotIn("<li", html)
+    def test_bad_link_on_out_of_stock_rejected(self):
+        with self.assertRaises(ValueError):
+            render_page([retailer(availability=OUT_OF_STOCK, order_url="")], REFRESHED)
 
     def test_escapes_html(self):
         html = render_page([retailer(name="<script>x</script>", variant='"><b>')], REFRESHED)

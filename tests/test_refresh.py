@@ -22,7 +22,7 @@ class RefreshTest(unittest.TestCase):
         return r, d / "site" / "index.html"
 
     def test_refresh_lists_in_stock_shop_with_order_link(self):
-        r, index = self.run_refresh([{"name": "Shop A", "host": "shop-a.example.test", "feed": (FEEDS / "shop-a.json").as_uri()}])
+        r, index = self.run_refresh([{"name": "Shop A", "host": "shop-a.example.test", "order_url": "https://shop-a.example.test/order/duo-256", "feed": (FEEDS / "shop-a.json").as_uri()}])
         self.assertEqual(r.returncode, 0, r.stderr)
         html = index.read_text()
         self.assertIn("Shop A", html)

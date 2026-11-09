@@ -15,10 +15,11 @@ class Retailer:
     availability: str
     order_url: str
     host: str
+    data_time: str | None = None
 
     @classmethod
     def from_dict(cls, d):
-        r = cls(d["name"], d["variant"], d["availability"], d["order_url"], d["host"])
+        r = cls(d["name"], d["variant"], d["availability"], d["order_url"], d["host"], d.get("data_time"))
         for field in (r.name, r.variant):
             if not isinstance(field, str) or not field.strip():
                 raise ValueError(f"name and variant must be non-empty text: {d!r}")
