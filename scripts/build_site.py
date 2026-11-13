@@ -2,9 +2,10 @@
 import html
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
+UTC = timezone.utc
 ROOT = Path(__file__).resolve().parent.parent
 STATUS_LABELS = {"in_stock": "Na zalihi", "out_of_stock": "Nema na zalihi", "unknown": "Nepoznato"}
 
