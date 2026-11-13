@@ -1,8 +1,0 @@
-{
-  "updated_at": "2026-11-13T02:00:00Z",
-  "stores": [
-    {"id": "store-zagreb", "name": "Primjer Trgovina Zagreb", "status": "in_stock", "order_url": "https://example.com/zagreb/iphone-duo"},
-    {"id": "store-split", "name": "Primjer Trgovina Split", "status": "out_of_stock", "order_url": "https://example.com/split/iphone-duo"},
-    {"id": "store-rijeka", "name": "Primjer Trgovina Rijeka", "status": "unknown", "order_url": "https://example.com/rijeka/iphone-duo"}
-  ]
-}

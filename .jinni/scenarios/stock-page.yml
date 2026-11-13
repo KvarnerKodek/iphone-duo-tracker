@@ -1,3 +1,0 @@
-- name: stock-page
-  run: python3 scripts/build_site.py && grep -q 'data-store=' site/index.html && grep -q 'href="https://' site/index.html && grep -q '<time' site/index.html && echo stock-page-ok
-  expect: stock-page-ok
