@@ -1,0 +1,27 @@
+{
+  "product": "iPhone Duo",
+  "product_verified": false,
+  "retailers": [
+    {
+      "name": "Links",
+      "host": "www.links.hr",
+      "variant": "iPhone Duo",
+      "order_url": "https://www.links.hr/iphone-duo",
+      "feed": "https://www.links.hr/iphone-duo/stock.json"
+    },
+    {
+      "name": "Instar Informatika",
+      "host": "www.instar-informatika.hr",
+      "variant": "iPhone Duo",
+      "order_url": "https://www.instar-informatika.hr/iphone-duo",
+      "feed": "https://www.instar-informatika.hr/iphone-duo/stock.json"
+    },
+    {
+      "name": "HGSpot",
+      "host": "www.hgspot.hr",
+      "variant": "iPhone Duo",
+      "order_url": "https://www.hgspot.hr/iphone-duo",
+      "feed": "https://www.hgspot.hr/iphone-duo/stock.json"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "retailers": [
+    {
+      "name": "Fixture Shop Zagreb",
+      "variant": "256 GB Black",
+      "availability": "in_stock",
+      "order_url": "https://shop-a.example.test/order/duo-256",
+      "host": "shop-a.example.test"
+    },
+    {
+      "name": "Fixture Shop Split",
+      "variant": "128 GB White",
+      "availability": "out_of_stock",
+      "order_url": "https://shop-b.example.test/order/duo-128",
+      "host": "shop-b.example.test"
+    },
+    {
+      "name": "Fixture Shop Rijeka",
+      "variant": "512 GB Black",
+      "availability": "unknown",
+      "order_url": "https://shop-c.example.test/order/duo-512",
+      "host": "shop-c.example.test"
+    }
+  ]
+}
