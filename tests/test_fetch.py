@@ -82,6 +82,23 @@ class FetchTest(unittest.TestCase):
         self.assertNotEqual(self.refresh(), 0)
         self.assert_untouched()
 
+    def test_future_timestamp_keeps_data(self):
+        self.serve({**DATA, "updated_at": "2099-01-01T00:00:00Z"})
+        self.assertNotEqual(self.refresh(), 0)
+        self.assert_untouched()
+
+    def test_oversized_response_keeps_data(self):
+        self.serve(json.dumps({**DATA, "updated_at": "2026-11-14T02:00:00Z"}).encode() + b" " * fetch_availability.MAX_BYTES)
+        self.assertNotEqual(self.refresh(), 0)
+        self.assert_untouched()
+
+    def test_corrupt_current_data_is_replaced(self):
+        self.target.write_bytes(b"{corrupt")
+        fresh = {**DATA, "updated_at": "2026-11-14T02:00:00Z"}
+        self.serve(fresh)
+        self.assertEqual(self.refresh(), 0)
+        self.assertEqual(json.loads(self.target.read_text()), fresh)
+
     def test_http_error_keeps_data(self):
         self.serve(json.dumps({**DATA, "updated_at": "2026-11-14T02:00:00Z"}), status=503)
         self.assertNotEqual(self.refresh(), 0)

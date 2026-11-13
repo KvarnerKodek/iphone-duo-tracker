@@ -4,13 +4,17 @@ import os
 import sys
 import tempfile
 import urllib.request
-from datetime import datetime
+import time
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from scripts import build_site
 
 TARGET = build_site.ROOT / "data" / "availability.json"
 TIMEOUT = 30
+DEADLINE = 60
+MAX_BYTES = 1 << 20
+FUTURE_SLACK = timedelta(days=1)
 
 
 def _parse(ts):
@@ -18,8 +22,33 @@ def _parse(ts):
     return parsed if parsed.tzinfo else parsed.replace(tzinfo=build_site.UTC)
 
 
+def _read(resp):
+    end = time.monotonic() + DEADLINE
+    raw = b""
+    while chunk := resp.read1(65536):
+        raw += chunk
+        if len(raw) > MAX_BYTES:
+            raise build_site.BuildError("response too large")
+        if time.monotonic() > end:
+            raise build_site.BuildError("response too slow")
+    return raw
+
+
+def _baseline(target):
+    try:
+        current = json.loads(Path(target).read_text(encoding="utf-8"))
+        build_site.validate(current)
+    except (OSError, ValueError, AttributeError, TypeError, build_site.BuildError):
+        return None
+    return current
+
+
 def check_against(current, new):
     build_site.validate(new)
+    if _parse(new["updated_at"]) > datetime.now(build_site.UTC) + FUTURE_SLACK:
+        raise build_site.BuildError("updated_at is in the future")
+    if current is None:
+        return
     missing = {s["id"] for s in current["stores"]} - {s["id"] for s in new["stores"]}
     if missing:
         raise build_site.BuildError(f"tracked stores missing: {sorted(missing)}")
@@ -31,9 +60,9 @@ def main(url, target=TARGET):
     target = Path(target)
     try:
         with urllib.request.urlopen(url, timeout=TIMEOUT) as resp:
-            raw = resp.read()
+            raw = _read(resp)
         new = json.loads(raw)
-        check_against(json.loads(target.read_text(encoding="utf-8")), new)
+        check_against(_baseline(target), new)
     except (OSError, ValueError, AttributeError, TypeError, build_site.BuildError) as err:
         print(f"fetch failed, data kept: {err}", file=sys.stderr)
         return 1

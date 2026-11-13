@@ -40,6 +40,7 @@ class PageTest(unittest.TestCase):
             mutate(lambda d: d.update(updated_at="yesterday")),
             mutate(lambda d: d["stores"][0].update(status="maybe")),
             mutate(lambda d: d["stores"][0].update(name="<script>x</script>")),
+            mutate(lambda d: d["stores"].append(dict(d["stores"][0]))),
         ]
         for data in cases:
             with self.subTest(data=data), self.assertRaises(build_site.BuildError):

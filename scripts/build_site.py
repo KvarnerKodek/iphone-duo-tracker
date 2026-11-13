@@ -29,6 +29,9 @@ def validate(data):
     stores = data.get("stores")
     if not isinstance(stores, list) or not stores:
         raise BuildError("stores is empty")
+    ids = [s.get("id") if isinstance(s, dict) else None for s in stores]
+    if len(set(ids)) != len(ids):
+        raise BuildError("duplicate store ids")
     for s in stores:
         sid = _text(s.get("id"), "store id")
         name = _text(s.get("name"), f"{sid} name")
